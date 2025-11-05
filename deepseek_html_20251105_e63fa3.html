@@ -1,0 +1,872 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Practice CBT — Mock Test</title>
+<meta name="description" content="Mock CBT / practice test web app (single file).">
+<style>
+  :root{
+    --bg:#0f1724; --card:#1a2332; --accent:#0ea5a4; --muted:#cbd5e1; --soft:#1e293b; --success:#10b981;
+    --text-primary:#f1f5f9; --text-secondary:#e2e8f0; --border:#334155;
+    --max-width:900px;
+    font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:linear-gradient(180deg,#071029 0%, #0b1220 100%);color:var(--text-primary);display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px}
+  .app{width:100%;max-width:var(--max-width)}
+  header{display:flex;gap:12px;align-items:center;margin-bottom:18px}
+  header h1{font-size:20px;margin:0;color:var(--text-primary)}
+  .card{background:var(--card);border-radius:12px;padding:18px;box-shadow:0 6px 18px rgba(2,6,23,0.6);border:1px solid var(--border)}
+  .grid{display:grid;grid-template-columns:1fr 360px;gap:16px}
+  @media (max-width:880px){.grid{grid-template-columns:1fr}}
+  .meta .row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+  label{font-size:13px;color:var(--muted);display:block;margin-bottom:6px;font-weight:500}
+  input[type=text],input[type=number],select{width:100%;padding:12px;border-radius:8px;border:1px solid var(--border);background:var(--soft);color:var(--text-primary);font-size:14px}
+  input[type=text]:focus,input[type=number]:focus,select:focus{outline:2px solid var(--accent);outline-offset:2px}
+  button{cursor:pointer;border:0;padding:12px 16px;border-radius:8px;background:var(--accent);color:#042023;font-weight:600;transition:all 0.2s ease;font-size:14px}
+  button:hover{opacity:0.9;transform:translateY(-1px)}
+  button:disabled{opacity:0.5;cursor:not-allowed;transform:none}
+  .muted{color:var(--muted);font-size:14px;font-weight:500}
+  .small{font-size:13px;color:var(--muted)}
+  .center{display:flex;align-items:center;justify-content:center}
+  /* test area */
+  .test-area{min-height:360px;display:flex;flex-direction:column;gap:16px}
+  .qcard{background:var(--soft);padding:20px;border-radius:10px;border:1px solid var(--border)}
+  .question{font-weight:600;margin-bottom:16px;color:var(--text-primary);font-size:16px;line-height:1.6}
+  .options{display:flex;flex-direction:column;gap:10px}
+  .option{padding:14px 16px;border-radius:8px;border:1px solid var(--border);background:var(--card);cursor:pointer;transition:all 0.2s ease;text-align:left;color:var(--text-secondary);font-size:14px;line-height:1.4}
+  .option:hover{background:var(--soft);border-color:var(--accent);transform:translateY(-1px)}
+  .option.selected{outline:2px solid var(--accent);background:rgba(14,165,164,0.15);border-color:var(--accent);color:var(--text-primary)}
+  .controls{display:flex;gap:10px;align-items:center;justify-content:space-between;margin-top:auto;flex-wrap:wrap}
+  .timer{font-weight:700;color:var(--accent);font-size:20px}
+  .sidebar .panel{margin-bottom:12px;padding:16px;border-radius:10px;background:var(--card);border:1px solid var(--border)}
+  .qlist{display:flex;flex-wrap:wrap;gap:6px}
+  .qbtn{width:42px;height:38px;border-radius:6px;border:1px solid var(--border);display:inline-flex;align-items:center;justify-content:center;background:var(--soft);cursor:pointer;font-weight:700;transition:all 0.2s ease;color:var(--text-primary);font-size:13px}
+  .qbtn:hover{background:var(--accent);color:#042023}
+  .qbtn.answered{background:var(--success);color:white}
+  .qbtn.mark{background:#f59e0b;color:white}
+  .qbtn.current{outline:2px solid var(--accent);outline-offset:2px}
+  .result{padding:20px;border-radius:8px;background:var(--card);border:1px solid var(--border)}
+  footer{margin-top:12px;text-align:center;color:var(--muted);font-size:13px}
+  .badge{display:inline-block;padding:6px 12px;border-radius:999px;background:var(--accent);font-weight:700;color:#042023}
+  a.link{color:var(--accent);text-decoration:none}
+  /* review */
+  .review-row{display:flex;gap:16px;align-items:flex-start;border-bottom:1px solid var(--border);padding:16px 0}
+  .correct{color:var(--success);font-weight:700}
+  .wrong{color:#ef4444;font-weight:700}
+  .warning{color:#f59e0b;font-weight:700}
+  .stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:16px}
+  .stat-card{padding:16px;border-radius:8px;background:var(--soft);text-align:center;border:1px solid var(--border)}
+  .stat-card .muted{font-size:12px;margin-bottom:4px}
+  .stat-card div:last-child{font-size:20px;font-weight:700}
+  
+  /* Solution styles */
+  .solution{background:rgba(14,165,164,0.1);padding:12px;border-radius:8px;margin-top:8px;border-left:4px solid var(--accent)}
+  .solution-title{font-weight:600;color:var(--accent);margin-bottom:6px;font-size:14px}
+  .solution-content{color:var(--text-secondary);font-size:13px;line-height:1.4}
+  
+  /* Improved visibility classes */
+  .text-high{color:var(--text-primary);font-weight:600}
+  .text-medium{color:var(--text-secondary)}
+  .text-muted{color:var(--muted)}
+  
+  /* Focus states for accessibility */
+  button:focus, .option:focus, .qbtn:focus {
+    outline:2px solid var(--accent);
+    outline-offset:2px;
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div style="flex:1">
+      <h1>Practice CBT — Mock Test</h1>
+      <div class="small muted">Simulate timed recruitment tests. Save & customize question bank in the file.</div>
+    </div>
+    <div class="center">
+      <div class="badge">60 Questions</div>
+    </div>
+  </header>
+
+  <div class="grid">
+    <!-- left: test -->
+    <div>
+      <div class="card">
+        <!-- setup -->
+        <div id="setup">
+          <div style="display:flex;gap:12px;align-items:center;margin-bottom:16px;flex-wrap:wrap">
+            <div style="flex:1;min-width:200px">
+              <label>Full Name</label>
+              <input id="candidateName" type="text" placeholder="Your name (optional)" value="Test Candidate">
+            </div>
+            <div style="width:220px">
+              <label>Department</label>
+              <select id="department">
+                <option value="general">General (All)</option>
+                <option value="immigration">Immigration</option>
+                <option value="fire">Fire Service</option>
+                <option value="correction">Correctional Service</option>
+              </select>
+            </div>
+          </div>
+          <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+            <div style="flex:1;min-width:120px">
+              <label>Number of Questions</label>
+              <input id="numQuestions" type="number" min="1" max="60" value="20" />
+            </div>
+            <div style="width:160px">
+              <label>Time (minutes)</label>
+              <input id="timeMinutes" type="number" min="1" max="180" value="30" />
+            </div>
+            <div style="width:120px;display:flex;align-items:end;justify-content:flex-end">
+              <button id="startBtn">Start Test</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- test -->
+        <div id="testInterface" style="display:none" class="test-area">
+          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px">
+            <div>
+              <div class="muted">Candidate:</div>
+              <div id="candidateDisplay" class="text-high"></div>
+            </div>
+            <div style="text-align:center">
+              <div class="muted">Department</div>
+              <div id="deptDisplay" class="text-high"></div>
+            </div>
+            <div style="text-align:right">
+              <div class="muted">Time left</div>
+              <div class="timer" id="timerDisplay">00:00</div>
+            </div>
+          </div>
+
+          <div id="questionCard" class="qcard" aria-live="polite">
+            <div class="question text-high" id="qText">Question text</div>
+            <div class="options" id="optionsList"></div>
+            <div style="margin-top:12px" id="qMeta" class="muted small"></div>
+            <div id="solutionArea" style="display:none;margin-top:12px"></div>
+          </div>
+
+          <div class="controls">
+            <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+              <button id="prevBtn">← Previous</button>
+              <button id="nextBtn">Next →</button>
+              <button id="markBtn">Mark for review</button>
+              <button id="clearBtn" style="background:var(--soft);color:var(--muted);border:1px solid var(--border)">Clear answer</button>
+              <button id="showSolutionBtn" style="background:var(--soft);color:var(--accent);border:1px solid var(--border)">Show Solution</button>
+            </div>
+            <div style="display:flex;gap:10px;align-items:center">
+              <div class="muted small">Questions answered: <span id="answeredCount" class="text-high">0</span></div>
+              <button id="finishBtn" style="background:#ef4444;color:white">Finish Test</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- result -->
+        <div id="resultPanel" style="display:none;margin-top:16px">
+          <div class="result">
+            <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px">
+              <div>
+                <div class="muted">Candidate</div>
+                <div id="resultCandidate" class="text-high"></div>
+              </div>
+              <div>
+                <div class="muted">Score</div>
+                <div id="scoreText" style="font-size:24px;font-weight:800" class="text-high"></div>
+              </div>
+              <div style="text-align:right">
+                <div class="muted">Time taken</div>
+                <div id="timeTaken" class="text-high" style="font-weight:700"></div>
+              </div>
+            </div>
+            
+            <div class="stats-grid">
+              <div class="stat-card">
+                <div class="muted">Total Questions</div>
+                <div id="statTotal" class="text-high">0</div>
+              </div>
+              <div class="stat-card">
+                <div class="muted">Correct</div>
+                <div id="statCorrect" style="color:var(--success)">0</div>
+              </div>
+              <div class="stat-card">
+                <div class="muted">Percentage</div>
+                <div id="statPercentage" class="text-high">0%</div>
+              </div>
+            </div>
+            
+            <div style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap">
+              <button id="reviewBtn" style="background:var(--accent);color:#042023">Review Answers</button>
+              <button id="restartBtn" style="background:var(--soft);color:var(--text-primary);border:1px solid var(--border)">Restart</button>
+              <button id="newTestBtn" style="background:var(--accent);color:#042023">New Test</button>
+            </div>
+          </div>
+
+          <div id="reviewArea" style="display:none;margin-top:16px"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- right: sidebar -->
+    <aside class="sidebar">
+      <div class="panel card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <div class="text-high"><strong>Test Controls</strong></div>
+          <div><span class="muted">Status</span></div>
+        </div>
+
+        <div style="display:flex;gap:8px;flex-wrap:wrap" class="qlist" id="qListButtons">
+          <!-- question shortcuts -->
+        </div>
+        <div style="margin-top:12px" class="muted small">Click a number to jump to that question. Green = answered; amber = marked for review.</div>
+      </div>
+
+      <div class="panel card" style="margin-top:12px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <div class="text-high"><strong>Test summary</strong></div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div class="muted small">Total: <span id="totalQ" class="text-high">0</span></div>
+          <div class="muted small">Answered: <span id="answeredQ" class="text-high">0</span></div>
+          <div class="muted small">Marked: <span id="markedQ" class="text-high">0</span></div>
+          <div class="muted small">Current: <span id="currentQ" class="text-high">1</span></div>
+        </div>
+      </div>
+
+      <div class="panel card" style="margin-top:12px">
+        <div style="font-weight:700;margin-bottom:8px" class="text-high">How to use</div>
+        <div class="small muted" style="line-height:1.5">
+          1. Enter your name and choose department.<br>
+          2. Choose number of questions & time, then Start.<br>
+          3. Answer questions, mark for review if needed.<br>
+          4. Use "Show Solution" to understand answers.<br>
+          5. Finish to submit and view score.<br>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <footer class="muted small">Save this file as <code style="background:var(--soft);padding:2px 6px;border-radius:4px;color:var(--text-primary)">index.html</code>. Customize the <code style="background:var(--soft);padding:2px 6px;border-radius:4px;color:var(--text-primary)">QUESTION_BANK</code> array in the script to change questions.</footer>
+</div>
+
+<script>
+/*
+  CBT Mock Test - Single File App
+  - Customize questions in QUESTION_BANK below
+  - Each question: {id, dept, q, options:[...], answer: index, solution: 'explanation'}
+*/
+
+const QUESTION_BANK = [
+  // Mathematics Questions (1-20)
+  { id:1, dept:'general', q:'The probabilities that Kodjo and Adoga pass an examination are 3/4 and 3/5 respectively. What is the probability both fail?', options:['1/10','3/10','1/2','2/3'], answer:0, 
+    solution:'Probability Kodjo fails = 1 - 3/4 = 1/4. Probability Adoga fails = 1 - 3/5 = 2/5. Probability both fail = (1/4) × (2/5) = 2/20 = 1/10.' },
+  
+  { id:2, dept:'general', q:'If a man buys a shirt for ₦800 and sells it for ₦1000, what is his profit percentage?', options:['20%','25%','15%','30%'], answer:1, 
+    solution:'Profit = Selling Price - Cost Price = ₦1000 - ₦800 = ₦200. Profit percentage = (Profit/Cost Price) × 100 = (200/800) × 100 = 25%.' },
+  
+  { id:3, dept:'general', q:'A box has 2 white and 3 blue marbles. Pick 2 without replacement. Probability of different colours?', options:['3/5','1/2','2/5','3/10'], answer:0, 
+    solution:'Total marbles = 5. Probability = (White then Blue) + (Blue then White) = (2/5 × 3/4) + (3/5 × 2/4) = 6/20 + 6/20 = 12/20 = 3/5.' },
+  
+  { id:4, dept:'general', q:'If ages are 3:4:5 and oldest-youngest=18, sum of ages?', options:['81','108','99','72'], answer:1, 
+    solution:'Let ages be 3x, 4x, 5x. Oldest - youngest = 5x - 3x = 2x = 18. So x = 9. Sum = 3x + 4x + 5x = 12x = 12 × 9 = 108.' },
+  
+  { id:5, dept:'general', q:'Which number comes next: 2, 6, 12, 20, 30, ?', options:['42','44','40','38'], answer:0, 
+    solution:'Pattern: +4, +6, +8, +10, +12. 2→6 (+4), 6→12 (+6), 12→20 (+8), 20→30 (+10), 30→42 (+12).' },
+  
+  { id:6, dept:'general', q:'If x + 1/x = 3, what is x² + 1/x²?', options:['7','8','9','6'], answer:0, 
+    solution:'Square both sides: (x + 1/x)² = x² + 2 + 1/x² = 9. So x² + 1/x² = 9 - 2 = 7.' },
+  
+  { id:7, dept:'general', q:'A train covers 120 km in 2 hours. What is its speed in m/s?', options:['16.67 m/s','20 m/s','25 m/s','30 m/s'], answer:0, 
+    solution:'Speed = Distance/Time = 120 km/2 h = 60 km/h. Convert to m/s: 60 × (1000/3600) = 60 × (5/18) = 16.67 m/s.' },
+  
+  { id:8, dept:'general', q:'If 2x + 5 = 15, what is x?', options:['5','10','7.5','8'], answer:0, 
+    solution:'2x + 5 = 15 → 2x = 15 - 5 → 2x = 10 → x = 5.' },
+  
+  { id:9, dept:'general', q:'What is 25% of 200?', options:['50','40','60','75'], answer:0, 
+    solution:'25% of 200 = (25/100) × 200 = 0.25 × 200 = 50.' },
+  
+  { id:10, dept:'general', q:'Simplify: (2/3) ÷ (4/5)', options:['5/6','8/15','3/4','6/5'], answer:0, 
+    solution:'(2/3) ÷ (4/5) = (2/3) × (5/4) = 10/12 = 5/6.' },
+  
+  { id:11, dept:'general', q:'If a square has area 64 cm², what is its perimeter?', options:['32 cm','16 cm','64 cm','48 cm'], answer:0, 
+    solution:'Area = side² = 64 → side = √64 = 8 cm. Perimeter = 4 × side = 4 × 8 = 32 cm.' },
+  
+  { id:12, dept:'general', q:'What is the average of 12, 15, 18, 21?', options:['16.5','17','16','18'], answer:0, 
+    solution:'Average = (12 + 15 + 18 + 21) ÷ 4 = 66 ÷ 4 = 16.5.' },
+  
+  { id:13, dept:'general', q:'If 3x - 7 = 14, what is x?', options:['7','9','8','6'], answer:0, 
+    solution:'3x - 7 = 14 → 3x = 14 + 7 → 3x = 21 → x = 7.' },
+  
+  { id:14, dept:'general', q:'Convert 0.75 to fraction', options:['3/4','4/3','1/4','2/3'], answer:0, 
+    solution:'0.75 = 75/100 = 3/4.' },
+  
+  { id:15, dept:'general', q:'What is 15% of 300?', options:['45','35','40','50'], answer:0, 
+    solution:'15% of 300 = (15/100) × 300 = 0.15 × 300 = 45.' },
+  
+  { id:16, dept:'general', q:'If a rectangle has length 8cm and width 5cm, what is its area?', options:['40 cm²','35 cm²','45 cm²','50 cm²'], answer:0, 
+    solution:'Area = length × width = 8 × 5 = 40 cm².' },
+  
+  { id:17, dept:'general', q:'Solve: 2(x + 3) = 16', options:['5','6','7','8'], answer:0, 
+    solution:'2(x + 3) = 16 → 2x + 6 = 16 → 2x = 10 → x = 5.' },
+  
+  { id:18, dept:'general', q:'What is the next prime number after 17?', options:['19','18','21','23'], answer:0, 
+    solution:'Prime numbers: 2,3,5,7,11,13,17,19,23... Next prime after 17 is 19.' },
+  
+  { id:19, dept:'general', q:'If 5 books cost ₦2500, what is cost of 8 books?', options:['₦4000','₦3500','₦4500','₦5000'], answer:0, 
+    solution:'Cost per book = ₦2500 ÷ 5 = ₦500. Cost of 8 books = 8 × ₦500 = ₦4000.' },
+  
+  { id:20, dept:'general', q:'What is 3² + 4²?', options:['25','16','12','9'], answer:0, 
+    solution:'3² = 9, 4² = 16. Sum = 9 + 16 = 25.' },
+
+  // English Language Questions (21-40)
+  { id:21, dept:'general', q:'The judge with his son __ travelling to Lagos now. Which is correct?', options:['are','is','were','be'], answer:1, 
+    solution:'When the subject is "judge with his son", the verb agrees with the main subject "judge" (singular), so use "is".' },
+  
+  { id:22, dept:'general', q:'Choose the correct spelling:', options:['Accommodation','Acommodation','Accomodation','Acomodation'], answer:0, 
+    solution:'The correct spelling is "Accommodation" - remember "two c\'s and two m\'s".' },
+  
+  { id:23, dept:'general', q:'Which word is a synonym for "happy"?', options:['Joyful','Sad','Angry','Tired'], answer:0, 
+    solution:'Synonyms are words with similar meanings. "Joyful" means very happy.' },
+  
+  { id:24, dept:'general', q:'Identify the noun: "The quick brown fox jumps over the lazy dog."', options:['fox, dog','quick, brown','jumps, over','the, lazy'], answer:0, 
+    solution:'Nouns are naming words. In this sentence, "fox" and "dog" are nouns.' },
+  
+  { id:25, dept:'general', q:'Choose the correct sentence:', options:['She doesn\'t like apples.','She don\'t like apples.','She doesn\'t likes apples.','She not like apples.'], answer:0, 
+    solution:'With third person singular (she/he/it), use "doesn\'t" + base verb: "She doesn\'t like apples."' },
+  
+  { id:26, dept:'general', q:'What is the past tense of "go"?', options:['went','goed','gone','going'], answer:0, 
+    solution:'The past tense of "go" is "went". This is an irregular verb.' },
+  
+  { id:27, dept:'general', q:'Which is a preposition?', options:['under','run','beautiful','quickly'], answer:0, 
+    solution:'Prepositions show relationship between words. "Under" shows position.' },
+  
+  { id:28, dept:'general', q:'Choose the correct plural of "child":', options:['children','childs','childes','childrens'], answer:0, 
+    solution:'The plural of "child" is "children" - this is an irregular plural.' },
+  
+  { id:29, dept:'general', q:'Identify the verb: "They are studying for their exams."', options:['are studying','they','for','exams'], answer:0, 
+    solution:'Verbs show action or state. "are studying" is the verb phrase.' },
+  
+  { id:30, dept:'general', q:'Which sentence is in passive voice?', options:['The ball was thrown by John.','John threw the ball.','John is throwing the ball.','John will throw the ball.'], answer:0, 
+    solution:'Passive voice: subject receives action. "The ball was thrown by John." is passive.' },
+  
+  { id:31, dept:'general', q:'What is the opposite of "ancient"?', options:['modern','old','historic','aged'], answer:0, 
+    solution:'Antonym of "ancient" (very old) is "modern" (new, current).' },
+  
+  { id:32, dept:'general', q:'Choose the correctly spelled word:', options:['Necessary','Neccessary','Necesary','Neccessary'], answer:0, 
+    solution:'Remember: "one collar (c) and two sleeves (s)" - Necessary.' },
+  
+  { id:33, dept:'general', q:'Which is a conjunction?', options:['and','quickly','house','beautiful'], answer:0, 
+    solution:'Conjunctions join words or sentences. "And" is a coordinating conjunction.' },
+  
+  { id:34, dept:'general', q:'Identify the adjective: "The red car is very fast."', options:['red, fast','car, is','the, very','is, fast'], answer:0, 
+    solution:'Adjectives describe nouns. "Red" describes car, "fast" describes car.' },
+  
+  { id:35, dept:'general', q:'What is the comparative form of "good"?', options:['better','gooder','more good','best'], answer:0, 
+    solution:'Comparative of "good" is "better", superlative is "best". Irregular forms.' },
+  
+  { id:36, dept:'general', q:'Choose the correct punctuation:', options:['I like apples, oranges, and bananas.','I like apples oranges and bananas.','I like apples, oranges and bananas.','I like apples oranges, and bananas.'], answer:0, 
+    solution:'Use Oxford comma: items in series separated by commas, with comma before "and".' },
+  
+  { id:37, dept:'general', q:'Which word is an adverb?', options:['quickly','quick','quickness','quickened'], answer:0, 
+    solution:'Adverbs modify verbs. "Quickly" describes how something is done.' },
+  
+  { id:38, dept:'general', q:'What is the meaning of "benevolent"?', options:['kind-hearted','evil','selfish','ignorant'], answer:0, 
+    solution:'"Benevolent" means well-meaning and kindly - wanting to do good for others.' },
+  
+  { id:39, dept:'general', q:'Identify the subject: "After school, the children played in the park."', options:['children','school','park','played'], answer:0, 
+    solution:'The subject is who/what the sentence is about. "Children" is the subject.' },
+  
+  { id:40, dept:'general', q:'Which is the correct question form?', options:['Where are you going?','Where you are going?','Where are going you?','You are going where?'], answer:0, 
+    solution:'Correct question structure: Question word + auxiliary verb + subject + main verb.' },
+
+  // General Knowledge & Current Affairs (41-50)
+  { id:41, dept:'general', q:'What is the capital of Nigeria?', options:['Abuja','Lagos','Kano','Port Harcourt'], answer:0, 
+    solution:'Abuja has been the capital of Nigeria since 1991, replacing Lagos.' },
+  
+  { id:42, dept:'general', q:'How many states are in Nigeria?', options:['36','37','35','38'], answer:0, 
+    solution:'Nigeria has 36 states plus the Federal Capital Territory (Abuja).' },
+  
+  { id:43, dept:'general', q:'Which is the largest continent?', options:['Asia','Africa','North America','Europe'], answer:0, 
+    solution:'Asia is the largest continent by both area and population.' },
+  
+  { id:44, dept:'general', q:'Who is the current President of Nigeria?', options:['Bola Tinubu','Muhammadu Buhari','Goodluck Jonathan','Yemi Osinbajo'], answer:0, 
+    solution:'As of 2023, Bola Ahmed Tinubu is the President of Nigeria.' },
+  
+  { id:45, dept:'general', q:'What is the currency of Nigeria?', options:['Naira','Cedi','Shilling','Franc'], answer:0, 
+    solution:'The Nigerian currency is Naira (₦), with Kobo as subunits.' },
+  
+  { id:46, dept:'general', q:'Which organization is responsible for elections in Nigeria?', options:['INEC','EFCC','NDLEA','NSCDC'], answer:0, 
+    solution:'INEC - Independent National Electoral Commission conducts elections.' },
+  
+  { id:47, dept:'general', q:'What does UNICEF stand for?', options:['United Nations Children\'s Fund','United Nations International Children\'s Fund','United Nations Child Fund','Universal Children\'s Fund'], answer:0, 
+    solution:'UNICEF: United Nations Children\'s Fund, works for children\'s rights.' },
+  
+  { id:48, dept:'general', q:'Which is the longest river in Nigeria?', options:['River Niger','River Benue','River Cross','River Kaduna'], answer:0, 
+    solution:'River Niger is the longest and most important river in Nigeria.' },
+  
+  { id:49, dept:'general', q:'When did Nigeria gain independence?', options:['October 1, 1960','October 1, 1963','January 1, 1960','June 12, 1960'], answer:0, 
+    solution:'Nigeria gained independence from Britain on October 1, 1960.' },
+  
+  { id:50, dept:'general', q:'What are the three arms of government?', options:['Executive, Legislature, Judiciary','Executive, Military, Police','President, Senate, Courts','Federal, State, Local'], answer:0, 
+    solution:'The three arms are: Executive (implements laws), Legislature (makes laws), Judiciary (interprets laws).' },
+
+  // Department Specific Questions (51-60)
+  { id:51, dept:'immigration', q:'What is the title of the head of NIS?', options:['Comptroller General of Immigration','Inspector General','Director General','Commissioner'], answer:0, 
+    solution:'The Nigeria Immigration Service is headed by the Comptroller General of Immigration.' },
+  
+  { id:52, dept:'immigration', q:'What is the primary role of immigration service?', options:['Border control and migration management','Tax collection','Road construction','Education management'], answer:0, 
+    solution:'Immigration service manages border control, passports, visas, and migration issues.' },
+  
+  { id:53, dept:'fire', q:'Which of these is correct for firefighting PPE?', options:['Helmet and boots','Helmet only','No PPE needed','Gloves only'], answer:0, 
+    solution:'Full Personal Protective Equipment for firefighters includes helmet, boots, gloves, and protective clothing.' },
+  
+  { id:54, dept:'fire', q:'What does the acronym PASS stand for in fire safety?', options:['Pull, Aim, Squeeze, Sweep','Push, Alert, Stop, Secure','Prevent, Alert, Save, Secure','Pull, Alert, Squeeze, Stop'], answer:0, 
+    solution:'PASS: Pull the pin, Aim at base of fire, Squeeze the handle, Sweep side to side.' },
+  
+  { id:55, dept:'correction', q:'What is the primary role of correctional services?', options:['Rehabilitation and reintegration','Punishment only','Security only','Judicial functions'], answer:0, 
+    solution:'Modern correctional services focus on rehabilitation and reintegration of offenders into society.' },
+  
+  { id:56, dept:'correction', q:'Which is NOT a correctional facility type?', options:['Police Station','Prison','Borstal','Remand Home'], answer:0, 
+    solution:'Police stations are for temporary detention, not long-term correctional facilities.' },
+  
+  { id:57, dept:'immigration', q:'What color is the Nigerian passport?', options:['Green','Blue','Red','Black'], answer:0, 
+    solution:'The standard Nigerian passport is green. Diplomatic passports are red.' },
+  
+  { id:58, dept:'fire', q:'What is the fire triangle?', options:['Heat, Fuel, Oxygen','Water, Fuel, Oxygen','Heat, Water, Fuel','Smoke, Heat, Fuel'], answer:0, 
+    solution:'The fire triangle consists of heat, fuel, and oxygen - remove any one to extinguish fire.' },
+  
+  { id:59, dept:'correction', q:'What is the minimum age for criminal responsibility in Nigeria?', options:['7 years','10 years','12 years','14 years'], answer:0, 
+    solution:'In Nigeria, the minimum age for criminal responsibility is 7 years.' },
+  
+  { id:60, dept:'general', q:'What does CCTV stand for?', options:['Closed-Circuit Television','Central Control Television','Camera Control Television','Closed Camera Television'], answer:0, 
+    solution:'CCTV: Closed-Circuit Television - video surveillance system for security monitoring.' }
+];
+
+// app state
+let state = {
+  questions: [],
+  perSession: 20,
+  durationMinutes: 30,
+  currentIndex: 0,
+  answers: {},    // map qid -> selectedIndex
+  marked: new Set(),
+  timer: null,
+  timeLeft: 0,
+  startedAt: null,
+  finishedAt: null
+};
+
+// DOM elements
+const qs = {
+  startBtn: document.getElementById('startBtn'),
+  candidateName: document.getElementById('candidateName'),
+  department: document.getElementById('department'),
+  numQuestions: document.getElementById('numQuestions'),
+  timeMinutes: document.getElementById('timeMinutes'),
+  setup: document.getElementById('setup'),
+  testInterface: document.getElementById('testInterface'),
+  candidateDisplay: document.getElementById('candidateDisplay'),
+  deptDisplay: document.getElementById('deptDisplay'),
+  timerDisplay: document.getElementById('timerDisplay'),
+  qText: document.getElementById('qText'),
+  optionsList: document.getElementById('optionsList'),
+  qMeta: document.getElementById('qMeta'),
+  solutionArea: document.getElementById('solutionArea'),
+  prevBtn: document.getElementById('prevBtn'),
+  nextBtn: document.getElementById('nextBtn'),
+  markBtn: document.getElementById('markBtn'),
+  clearBtn: document.getElementById('clearBtn'),
+  showSolutionBtn: document.getElementById('showSolutionBtn'),
+  finishBtn: document.getElementById('finishBtn'),
+  qListButtons: document.getElementById('qListButtons'),
+  totalQ: document.getElementById('totalQ'),
+  answeredQ: document.getElementById('answeredQ'),
+  markedQ: document.getElementById('markedQ'),
+  currentQ: document.getElementById('currentQ'),
+  answeredCount: document.getElementById('answeredCount'),
+  resultPanel: document.getElementById('resultPanel'),
+  scoreText: document.getElementById('scoreText'),
+  timeTaken: document.getElementById('timeTaken'),
+  reviewBtn: document.getElementById('reviewBtn'),
+  reviewArea: document.getElementById('reviewArea'),
+  restartBtn: document.getElementById('restartBtn'),
+  newTestBtn: document.getElementById('newTestBtn'),
+  resultCandidate: document.getElementById('resultCandidate'),
+  statTotal: document.getElementById('statTotal'),
+  statCorrect: document.getElementById('statCorrect'),
+  statPercentage: document.getElementById('statPercentage')
+};
+
+// Utility functions
+function shuffleArray(array) {
+  const arr = array.slice();
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+function selectQuestions(dept, count) {
+  if (QUESTION_BANK.length === 0) {
+    console.error('Question bank is empty');
+    return [];
+  }
+  
+  const pool = QUESTION_BANK.filter(q => q.dept === 'general' || q.dept === dept);
+  
+  if (pool.length === 0) {
+    console.warn('No questions found for department:', dept);
+    return QUESTION_BANK.filter(q => q.dept === 'general').slice(0, count);
+  }
+  
+  const shuffled = shuffleArray(pool);
+  return shuffled.slice(0, Math.min(count, shuffled.length));
+}
+
+function formatTime(seconds) {
+  const mins = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+}
+
+function calculateScore() {
+  let correct = 0;
+  state.questions.forEach(question => {
+    const userAnswer = state.answers[question.id];
+    if (userAnswer !== undefined && userAnswer === question.answer) {
+      correct++;
+    }
+  });
+  return {
+    correct,
+    total: state.questions.length,
+    percentage: state.questions.length > 0 ? Math.round((correct / state.questions.length) * 100) : 0
+  };
+}
+
+function updateStats() {
+  const answered = Object.keys(state.answers).length;
+  const marked = state.marked.size;
+  
+  qs.answeredQ.textContent = answered;
+  qs.markedQ.textContent = marked;
+  qs.answeredCount.textContent = answered;
+  qs.currentQ.textContent = state.currentIndex + 1;
+  
+  // Update question list buttons
+  updateQListStatus();
+}
+
+function updateQListStatus() {
+  const buttons = qs.qListButtons.querySelectorAll('.qbtn');
+  buttons.forEach(btn => {
+    const idx = parseInt(btn.dataset.idx);
+    const question = state.questions[idx];
+    
+    btn.classList.remove('answered', 'mark', 'current');
+    
+    if (state.answers[question.id] !== undefined) {
+      btn.classList.add('answered');
+    }
+    if (state.marked.has(question.id)) {
+      btn.classList.add('mark');
+    }
+    if (idx === state.currentIndex) {
+      btn.classList.add('current');
+    }
+  });
+}
+
+// Main functions
+function startTest() {
+  const name = qs.candidateName.value.trim() || 'Anonymous';
+  const dept = qs.department.value;
+  const count = Math.max(1, Math.min(60, parseInt(qs.numQuestions.value) || 20));
+  const minutes = Math.max(1, Math.min(180, parseInt(qs.timeMinutes.value) || 30));
+
+  state.perSession = count;
+  state.durationMinutes = minutes;
+  state.questions = selectQuestions(dept, count);
+  state.currentIndex = 0;
+  state.answers = {};
+  state.marked = new Set();
+  state.timeLeft = minutes * 60;
+  state.startedAt = Date.now();
+
+  if (state.questions.length === 0) {
+    alert('No questions available for the selected department. Please try another department.');
+    return;
+  }
+
+  // UI updates
+  qs.candidateDisplay.textContent = name;
+  qs.deptDisplay.textContent = dept.charAt(0).toUpperCase() + dept.slice(1);
+  qs.totalQ.textContent = state.questions.length;
+  
+  updateStats();
+  renderQuestionListButtons();
+  showTestInterface();
+  renderCurrentQuestion();
+  startTimer();
+}
+
+function showTestInterface() {
+  qs.setup.style.display = 'none';
+  qs.testInterface.style.display = '';
+  qs.resultPanel.style.display = 'none';
+  qs.reviewArea.style.display = 'none';
+  qs.solutionArea.style.display = 'none';
+}
+
+function renderQuestionListButtons() {
+  qs.qListButtons.innerHTML = '';
+  state.questions.forEach((q, idx) => {
+    const btn = document.createElement('button');
+    btn.className = 'qbtn';
+    btn.textContent = idx + 1;
+    btn.title = `Go to Q${idx + 1}`;
+    btn.dataset.idx = idx;
+    btn.addEventListener('click', () => goToQuestion(idx));
+    qs.qListButtons.appendChild(btn);
+  });
+  updateQListStatus();
+}
+
+function renderCurrentQuestion() {
+  if (state.questions.length === 0) return;
+  
+  const question = state.questions[state.currentIndex];
+  qs.qText.textContent = question.q;
+  qs.qMeta.textContent = `Question ${state.currentIndex + 1} of ${state.questions.length} • ${question.dept.toUpperCase()}`;
+  
+  // Hide solution when moving to new question
+  qs.solutionArea.style.display = 'none';
+  
+  // Render options
+  qs.optionsList.innerHTML = '';
+  question.options.forEach((option, index) => {
+    const optionEl = document.createElement('button');
+    optionEl.className = 'option';
+    optionEl.textContent = `${String.fromCharCode(65 + index)}. ${option}`;
+    optionEl.addEventListener('click', () => selectAnswer(index));
+    
+    if (state.answers[question.id] === index) {
+      optionEl.classList.add('selected');
+    }
+    
+    qs.optionsList.appendChild(optionEl);
+  });
+  
+  updateNavigation();
+  updateStats();
+}
+
+function showSolution() {
+  const question = state.questions[state.currentIndex];
+  if (question.solution) {
+    qs.solutionArea.style.display = 'block';
+    qs.solutionArea.innerHTML = `
+      <div class="solution">
+        <div class="solution-title">Solution:</div>
+        <div class="solution-content">${question.solution}</div>
+      </div>
+    `;
+  }
+}
+
+function selectAnswer(answerIndex) {
+  const question = state.questions[state.currentIndex];
+  state.answers[question.id] = answerIndex;
+  renderCurrentQuestion();
+}
+
+function clearAnswer() {
+  const question = state.questions[state.currentIndex];
+  delete state.answers[question.id];
+  renderCurrentQuestion();
+}
+
+function toggleMark() {
+  const question = state.questions[state.currentIndex];
+  if (state.marked.has(question.id)) {
+    state.marked.delete(question.id);
+  } else {
+    state.marked.add(question.id);
+  }
+  updateStats();
+}
+
+function goToQuestion(index) {
+  if (index >= 0 && index < state.questions.length) {
+    state.currentIndex = index;
+    renderCurrentQuestion();
+  }
+}
+
+function updateNavigation() {
+  qs.prevBtn.disabled = state.currentIndex === 0;
+  qs.nextBtn.disabled = state.currentIndex === state.questions.length - 1;
+}
+
+function startTimer() {
+  if (state.timer) {
+    clearInterval(state.timer);
+  }
+  
+  state.timer = setInterval(() => {
+    state.timeLeft--;
+    qs.timerDisplay.textContent = formatTime(state.timeLeft);
+    
+    if (state.timeLeft <= 0) {
+      clearInterval(state.timer);
+      finishTest();
+    }
+    
+    // Warning when 5 minutes left
+    if (state.timeLeft === 300) {
+      qs.timerDisplay.style.color = '#f59e0b';
+    }
+    
+    // Critical when 1 minute left
+    if (state.timeLeft === 60) {
+      qs.timerDisplay.style.color = '#ef4444';
+    }
+  }, 1000);
+}
+
+function finishTest() {
+  state.finishedAt = Date.now();
+  
+  if (state.timer) {
+    clearInterval(state.timer);
+  }
+  
+  const timeTaken = Math.round((state.finishedAt - state.startedAt) / 1000);
+  const score = calculateScore();
+  
+  // Show results
+  qs.testInterface.style.display = 'none';
+  qs.resultPanel.style.display = '';
+  
+  qs.resultCandidate.textContent = qs.candidateName.value.trim() || 'Anonymous';
+  qs.scoreText.textContent = `${score.correct}/${score.total}`;
+  qs.timeTaken.textContent = formatTime(timeTaken);
+  
+  qs.statTotal.textContent = score.total;
+  qs.statCorrect.textContent = score.correct;
+  qs.statPercentage.textContent = `${score.percentage}%`;
+}
+
+function showReview() {
+  qs.reviewArea.style.display = '';
+  qs.reviewArea.innerHTML = '<h3 style="margin-bottom:16px;color:var(--text-primary)">Answer Review</h3>';
+  
+  state.questions.forEach((question, index) => {
+    const userAnswer = state.answers[question.id];
+    const isCorrect = userAnswer === question.answer;
+    
+    const reviewRow = document.createElement('div');
+    reviewRow.className = 'review-row';
+    
+    const status = document.createElement('div');
+    status.style.width = '100px';
+    status.style.flexShrink = '0';
+    
+    if (userAnswer === undefined) {
+      status.innerHTML = '<span class="muted">Not answered</span>';
+    } else if (isCorrect) {
+      status.innerHTML = '<span class="correct">✓ Correct</span>';
+    } else {
+      status.innerHTML = '<span class="wrong">✗ Wrong</span>';
+    }
+    
+    const content = document.createElement('div');
+    content.style.flex = '1';
+    let solutionHtml = '';
+    if (question.solution) {
+      solutionHtml = `<div class="solution" style="margin-top:8px">
+        <div class="solution-title">Solution:</div>
+        <div class="solution-content">${question.solution}</div>
+      </div>`;
+    }
+    
+    content.innerHTML = `
+      <div style="font-weight:600;color:var(--text-primary)">Q${index + 1}: ${question.q}</div>
+      <div style="margin-top:8px">
+        <div class="small" style="color:var(--text-secondary)">Your answer: <strong>${userAnswer !== undefined ? String.fromCharCode(65 + userAnswer) + '. ' + question.options[userAnswer] : 'Not answered'}</strong></div>
+        ${!isCorrect && userAnswer !== undefined ? 
+          `<div class="small" style="color:var(--success);margin-top:4px">Correct answer: <strong>${String.fromCharCode(65 + question.answer) + '. ' + question.options[question.answer]}</strong></div>` : ''}
+        ${solutionHtml}
+      </div>
+    `;
+    
+    reviewRow.appendChild(status);
+    reviewRow.appendChild(content);
+    qs.reviewArea.appendChild(reviewRow);
+  });
+}
+
+function restartTest() {
+  state.questions = [];
+  state.answers = {};
+  state.marked = new Set();
+  state.currentIndex = 0;
+  
+  if (state.timer) {
+    clearInterval(state.timer);
+  }
+  
+  qs.resultPanel.style.display = 'none';
+  qs.setup.style.display = '';
+  qs.timerDisplay.style.color = 'var(--accent)';
+}
+
+function newTest() {
+  restartTest();
+  // Keep form values but allow modification
+}
+
+// Event listeners
+document.addEventListener('DOMContentLoaded', function() {
+  qs.startBtn.addEventListener('click', startTest);
+  qs.prevBtn.addEventListener('click', () => goToQuestion(state.currentIndex - 1));
+  qs.nextBtn.addEventListener('click', () => goToQuestion(state.currentIndex + 1));
+  qs.markBtn.addEventListener('click', toggleMark);
+  qs.clearBtn.addEventListener('click', clearAnswer);
+  qs.showSolutionBtn.addEventListener('click', showSolution);
+  qs.finishBtn.addEventListener('click', finishTest);
+  qs.reviewBtn.addEventListener('click', showReview);
+  qs.restartBtn.addEventListener('click', restartTest);
+  qs.newTestBtn.addEventListener('click', newTest);
+  
+  // Keyboard navigation
+  document.addEventListener('keydown', (e) => {
+    if (qs.testInterface.style.display !== 'none') {
+      if (e.key === 'ArrowLeft') {
+        goToQuestion(state.currentIndex - 1);
+      } else if (e.key === 'ArrowRight') {
+        goToQuestion(state.currentIndex + 1);
+      } else if (e.key >= '1' && e.key <= '9') {
+        const num = parseInt(e.key) - 1;
+        if (num < state.questions.length) {
+          goToQuestion(num);
+        }
+      } else if (e.key.toLowerCase() === 'a' || e.key.toLowerCase() === 'b' || 
+                 e.key.toLowerCase() === 'c' || e.key.toLowerCase() === 'd') {
+        const index = e.key.toLowerCase().charCodeAt(0) - 97;
+        if (index < state.questions[state.currentIndex].options.length) {
+          selectAnswer(index);
+        }
+      } else if (e.key === 's') {
+        showSolution();
+      }
+    }
+  });
+});
+</script>
+</body>
+</html>
