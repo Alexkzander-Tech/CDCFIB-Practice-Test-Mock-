@@ -1,0 +1,1 @@
+A comprehensive, self-contained web application designed to simulate Computer-Based Tests (CBT) for recruitment examinations and academic assessments. This single-file solution provides a realistic testing environment with advanced features for both practice and learning.
